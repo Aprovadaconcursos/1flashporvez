@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+      flex-direction: column;
+    }
+
+    .deck-container {
+      width: 80%;
+      height: 70%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+      position: relative;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    .text-box {
+      background-color: #fff;
+      padding: 20px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: absolute;
+      overflow: auto;
+      cursor: text;
+    }
+
+    .text-box p {
+      margin: 0;
+      font-size: 18px;
+      color: #333;
+      display: inline-block;
+    }
+
+    /* Estilo para ajustar imagens grandes dentro do flashcard */
+    img {
+      max-width: 100%;           /* Ajusta a largura da imagem sem ultrapassar o contêiner */
+      max-height: 100%;          /* Ajusta a altura da imagem sem ultrapassar o contêiner */
+      object-fit: contain;       /* Garante que a imagem será redimensionada proporcionalmente */
+      display: block;
+      margin: 0 auto;            /* Centraliza a imagem dentro do contêiner */
+    }
+
+    .upload-container {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .upload-container input[type="file"] {
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 80%;
+      margin-top: 20px;
+    }
+
+    .controls button, .controls select {
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .controls .navigation-buttons, .controls .flashcard-actions, .controls .voice-options {
+      display: flex;
+      gap: 20px;
+    }
+
+    .flashcard-actions button {
+      background-color: #FF6347;
+      padding: 8px 12px;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .flashcard-actions button:hover {
+      background-color: #D94B36;
+    }
+
+    .flashcard-actions i {
+      font-size: 1.2em;
+    }
+
+    button i {
+      font-size: 1.5em;
+    }
+
+    /* Estilo para o controle de volume */
+    .volume-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .volume-control input {
+      width: 100px;
+    }
+
+  </style>
+  <title>Flashcard com Navegação</title>
+</head>
+<body>
+
+<div class="upload-container">
+  <input type="file" id="fileInput" accept=".docx" />
+</div>
+
+<div class="deck-container">
+  <div class="text-box">
+    <p id="flashcard-text" contenteditable="true">Aguardando o arquivo...</p>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="navigation-buttons">
+    <button id="previousButton">Anterior</button>
+    <button id="nextButton">Próximo</button>
+  </div>
+
+  <div class="flashcard-actions">
+    <button id="addFlashcardButton"><i class="fas fa-plus"></i></button>
+    <button id="deleteFlashcardButton"><i class="fas fa-trash-alt"></i></button>
+  </div>
+
+  <div class="voice-options">
+    <select id="speedSelect">
+      <option value="1.0">1x</option>
+      <option value="1.75">1.75x</option>
+      <option value="2.0">2x</option>
+      <option value="2.75">2.75x</option>
+      <option value="3.0">3x</option>
+    </select>
+    <button id="speakButton">Ler em Voz Alta</button>
+  </div>
+
+  <!-- Controle de volume -->
+  <div class="volume-control">
+    <i class="fas fa-volume-up"></i>
+    <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="1" />
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+<script>
+  let paragraphs = [];
+  let currentIndex = 0;
+  let isSpeaking = false;
+  let speechSynthesisUtterance = null;
+  let isPaused = false;
+  let volume = 1;
+
+  function handleFileUpload(event) {
+    const file = event.target.files[0];
+
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        mammoth.convertToHtml({ arrayBuffer: e.target.result })
+          .then(function(result) {
+            const htmlContent = result.value;
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+            const paragraphsArray = doc.body.querySelectorAll('p');
+
+            paragraphs = Array.from(paragraphsArray).map(p => p.innerHTML);
+            currentIndex = 0;
+            showFlashcard(currentIndex);
+          })
+          .catch(function(err) {
+            alert('Erro ao processar o arquivo Word.');
+            console.log(err);
+          });
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+  }
+
+  function showFlashcard(index) {
+    if (paragraphs.length > 0) {
+      document.getElementById('flashcard-text').innerHTML = paragraphs[index];
+      if (isSpeaking) {
+        speakText(paragraphs[index]);
+      }
+    }
+  }
+
+  function removeHtmlTags(text) {
+    const doc = new DOMParser().parseFromString(text, 'text/html');
+    return doc.body.textContent || "";
+  }
+
+  function speakText(text) {
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+    }
+
+    const plainText = removeHtmlTags(text);
+    const speech = new SpeechSynthesisUtterance(plainText);
+    speech.rate = parseFloat(document.getElementById('speedSelect').value);
+    speech.lang = "pt-BR";
+    speech.volume = volume;
+
+    window.speechSynthesis.speak(speech);
+
+    speechSynthesisUtterance = speech;
+    isSpeaking = true;
+    isPaused = false;
+
+    speech.onend = function () {
+      isSpeaking = false;
+    };
+  }
+
+  function navigate(direction) {
+    if (direction === "next" && currentIndex < paragraphs.length - 1) {
+      currentIndex++;
+      showFlashcard(currentIndex);
+      speakText(paragraphs[currentIndex]); // Continuar leitura automaticamente
+    } else if (direction === "previous" && currentIndex > 0) {
+      currentIndex--;
+      showFlashcard(currentIndex);
+      speakText(paragraphs[currentIndex]); // Continuar leitura automaticamente
+    }
+  }
+
+  document.getElementById('previousButton').addEventListener('click', () => navigate("previous"));
+  document.getElementById('nextButton').addEventListener('click', () => navigate("next"));
+  document.getElementById('speakButton').addEventListener('click', () => {
+    if (!isSpeaking) {
+      const currentText = paragraphs[currentIndex] || '';
+      speakText(currentText);
+    }
+  });
+
+  document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+
+  // Controle de volume
+  document.getElementById('volumeControl').addEventListener('input', function(event) {
+    volume = event.target.value;
+    if (isSpeaking) {
+      speechSynthesisUtterance.volume = volume;
+    }
+  });
+</script>
+
+<!-- Piada para alegrar a interface -->
+<script>
+  alert("Por que o livro de matemática se suicidou? Porque ele tinha muitos problemas!");
+</script>
+
+</body>
+</html>
