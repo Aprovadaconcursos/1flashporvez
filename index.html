@@ -59,13 +59,13 @@
       display: inline-block;
     }
 
-    /* Estilo para ajustar imagens grandes dentro do flashcard */
+    /* Estilo para centralizar a imagem sem distorcer */
     img {
-      max-width: 100%;           /* Ajusta a largura da imagem sem ultrapassar o contêiner */
-      max-height: 100%;          /* Ajusta a altura da imagem sem ultrapassar o contêiner */
-      object-fit: contain;       /* Garante que a imagem será redimensionada proporcionalmente */
+      max-width: 80%;           /* Limita a largura da imagem para 80% da largura do flashcard */
+      max-height: 80%;          /* Limita a altura da imagem para 80% da altura do flashcard */
+      object-fit: contain;      /* Redimensiona proporcionalmente a imagem */
       display: block;
-      margin: 0 auto;            /* Centraliza a imagem dentro do contêiner */
+      margin: auto;             /* Centraliza a imagem dentro do flashcard */
     }
 
     .upload-container {
@@ -129,6 +129,18 @@
 
     .volume-control input {
       width: 100px;
+    }
+
+    /* Ajuste para telas horizontais */
+    @media (orientation: landscape) {
+      .deck-container {
+        width: 60%;
+        height: 60%;
+      }
+
+      .controls {
+        width: 70%;
+      }
     }
 
   </style>
@@ -279,11 +291,6 @@
       speechSynthesisUtterance.volume = volume;
     }
   });
-</script>
-
-<!-- Piada para alegrar a interface -->
-<script>
-  alert("Por que o livro de matemática se suicidou? Porque ele tinha muitos problemas!");
 </script>
 
 </body>
