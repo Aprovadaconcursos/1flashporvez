@@ -59,13 +59,12 @@
       display: inline-block;
     }
 
-    /* Estilo para centralizar a imagem sem distorcer */
     img {
-      max-width: 90%;           /* Limita a largura da imagem para 90% da largura do flashcard */
-      max-height: 90%;          /* Limita a altura da imagem para 90% da altura do flashcard */
-      object-fit: contain;      /* Redimensiona proporcionalmente a imagem */
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
       display: block;
-      margin: auto;             /* Centraliza a imagem */
+      margin: auto;
     }
 
     .upload-container {
@@ -120,7 +119,6 @@
       font-size: 1.5em;
     }
 
-    /* Estilo para o controle de volume */
     .volume-control {
       display: flex;
       align-items: center;
@@ -131,6 +129,32 @@
       width: 100px;
     }
 
+    .highlight {
+      text-decoration: underline;
+      text-decoration-color: #D8B4DD;
+      text-decoration-thickness: 2px;
+    }
+
+    /* Estilo para o botão de copiar */
+    #copyButton {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: transparent;
+      border: none;
+      color: #555;
+      font-size: 20px;
+      cursor: pointer; /* Transformar em mãozinha */
+      transition: background-color 0.3s ease;
+    }
+
+    #copyButton:hover {
+      background-color: #f0f0f0;
+    }
+
+    #copyButton:active {
+      background-color: #ddd; /* Cor quando pressionado */
+    }
   </style>
   <title>Flashcard com Navegação</title>
 </head>
@@ -143,6 +167,9 @@
 <div class="deck-container">
   <div class="text-box">
     <p id="flashcard-text" contenteditable="true">Aguardando o arquivo...</p>
+    <button id="copyButton">
+      <i class="fas fa-copy"></i>
+    </button>
   </div>
 </div>
 
@@ -278,6 +305,16 @@
     if (isSpeaking) {
       speechSynthesisUtterance.volume = volume;
     }
+  });
+
+  // Função para copiar o conteúdo do flashcard
+  document.getElementById('copyButton').addEventListener('click', function() {
+    const flashcardText = document.getElementById('flashcard-text').innerText;
+    navigator.clipboard.writeText(flashcardText).then(function() {
+      // Não exibe o alerta, mas a função de cópia está funcionando
+    }).catch(function(err) {
+      console.error('Erro ao copiar o texto: ', err);
+    });
   });
 </script>
 
